@@ -42,6 +42,50 @@ def bakery_by_id(id):
     )
     return response
 
+@app.route('/bakeries/<int:id>', methods = ["GET", "PATCH", "DELETE"])
+def patch_bakery(id):
+    bakery = Bakery.query.filter_by(id=id).first()
+
+    if bakery == None:
+        response_body = {
+            "message": "This response does not exist in our database.Please try again later"
+        }
+
+        response = make_response(jsonify(response_body), 404)
+
+        return response
+    else:
+        if request.method == "GET":
+            bakery_dict = bakery.to_dict()
+            response = make_response(jsonify(bakery_dict), 200)
+            return response
+        
+        elif request.method == "PATCH":
+            for attr in request.form:
+                setattr(bakery, attr, request.form.get(attr))
+            
+            db.session.add(bakery)
+            db.session.commit()
+
+            bakery_dict = bakery.to_dict()
+            response = make_response(jsonify(bakery_dict), 200)
+            return response
+        
+        elif request.method == "DELETE":
+            db.session.delete(bakery)
+            db.session.commit()
+
+            response_body = {
+                "delete successful": True,
+                "message": "Bakery deleted"
+            }
+
+            response = make_response(jsonify(response_body), 200)
+            return response
+
+
+
+
 @app.route('/baked_goods/by_price')
 def baked_goods_by_price():
     baked_goods_by_price = BakedGood.query.order_by(BakedGood.price).all()
@@ -65,6 +109,36 @@ def most_expensive_baked_good():
         200
     )
     return response
+
+@app.route('/baked_goods', methods =['GET', 'POST'])
+def post__baked_goods():
+    if request.method == "GET":
+        baked_goods = []
+        for baked_good in BakedGood.query.all():
+            baked_good_dict = baked_good.to_dict()
+            baked_goods.append(baked_good_dict)
+        
+        response = make_response(jsonify(baked_goods), 200)
+
+        return response
+    
+    elif request.method =="POST":
+
+        new_baked_good = BakedGood(
+            name = request.form.get("name"),
+            price = request.form.get("price"),
+            bakery_id = request.form.get("bakery_id"),
+        )
+        db.session.add(new_baked_good)
+        db.session.commit()
+
+        baked_good_dict =  new_baked_good.to_dict()
+
+        response = make_response(jsonify(baked_good_dict), 201)
+
+        return response
+
+
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
