@@ -137,6 +137,35 @@ def post__baked_goods():
         response = make_response(jsonify(baked_good_dict), 201)
 
         return response
+    
+@app.route("/baked_goods/<int:id>", methods=["GET", "DELETE"])
+def delete_baked_goods(id):
+    baked_good = BakedGood.query.filter_by(id=id).first()
+
+    if baked_good is None:
+        response_body = {
+            'message': 'Baked good not found.'
+        }
+        return make_response(jsonify(response_body), 404)
+
+
+    if request.method == "GET":
+        baked_good_dict = baked_good.to_dict()
+
+        return make_response(jsonify(baked_good_dict),200)
+
+
+    elif request.method=="DELETE":
+        db.session.delete(baked_good)
+        db.session.commit()
+
+        
+    response_body = {
+        'delete_successful': True,
+        'message': 'Baked good deleted.'
+    }
+
+    return make_response(jsonify(response_body), 200)
 
 
 
